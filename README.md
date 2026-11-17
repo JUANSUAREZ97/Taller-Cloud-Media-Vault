@@ -35,11 +35,6 @@ Requisito: Node.js 22 o superior; recomendado Node.js 24 LTS.
 
 No se necesitan credenciales para `npm test` ni `npm run build`.
 
-## Documentación
-
-- [Guía desde cero](GUIA_PASO_A_PASO.md): instalación, servicios, GitHub Desktop, ramas, pruebas, despliegue y demostración.
-- [Contrato entre roles](docs/CONTRATO_EQUIPO.md): archivos de cada compañero, API y condiciones de integración.
-- [Verificación](docs/VERIFICACION.md): pruebas realizadas y pendientes.
 
 ## Formatos y límite
 
@@ -163,8 +158,133 @@ Mientras el guardado esté pendiente, el `POST` válido devuelve `501` y se deti
 3. Conecta la galería a `GET /api/archivos` y actualiza la vista después de subir o eliminar un archivo correctamente.
 4. Prueba el recorrido completo una vez integrado el rol 3. El frontend se comunica con la API de Next.js mediante `/api/archivos`. Las conexiones con Supabase y Neon se ejecutan en el servidor.
 
-Consulta [el contrato del equipo](docs/CONTRATO_EQUIPO.md) para ver los campos, los filtros y las respuestas acordadas.
-
 ### 6. Subir tu aporte
 
 En GitHub Desktop, revisa **Changes**, crea commits con mensajes que describan tu aporte y pulsa **Publish branch** la primera vez o **Push origin** en los siguientes cambios. Abre un pull request hacia `main` e indica qué implementaste, qué probaste y qué sigue pendiente.
+
+### DOCUMENTACION NUEVA Y CORREJIDA GRAMATICALMENTE Y CONFORME AL DESARROLLO
+
+# Cloud Media Vault
+
+Desarrollamos una aplicación web para subir, consultar y eliminar archivos multimedia. Usamos Next.js para la interfaz y la API, Supabase Storage para los archivos y Neon PostgreSQL para los metadatos, con Drizzle como ORM.
+
+## Estado del primer avance
+
+Ya incorporamos la configuración cloud, el esquema de metadatos, la validación del formulario y la transferencia a Supabase (roles 1 y 2). Podemos comprobar por separado la conexión a Neon, una subida real a Supabase y las respuestas HTTP en Postman.
+
+Nos falta conectar el guardado definitivo en Neon, implementar el listado y el borrado sincronizado (rol 3), y construir el formulario y la galería (roles 4 y 5). Por eso, cuando enviamos un POST válido en este avance, esperamos **501**: superamos la validación y detenemos el flujo antes de subir el archivo.
+
+## Equipo y ramas
+
+Adaptamos los cinco roles a nuestro equipo de tres integrantes.
+
+| Participación | Responsabilidad | Rama |
+|---|---|---|
+| Roles 1 y 2 | Configuramos los servicios, el esquema, las variables y la subida validada | `feature/cloud-ingesta` |
+| Rol 3 | Implementaremos la persistencia, el listado y la eliminación sincronizada | `feature/persistencia-crud` |
+| Roles 4 y 5 | Construiremos el formulario, la galería, los filtros y las pruebas de interfaz | `feature/frontend` |
+
+## Cómo funciona
+
+Enviamos el formulario como `FormData` a `POST /api/archivos`. El servidor valida los campos, el tamaño, el tipo MIME y la firma del archivo. En el flujo completo, guardamos primero el archivo en Supabase Storage y después sus metadatos en Neon. Usamos el `publicId` para vincular el objeto con su fila en la tabla `archivos`.
+
+Aceptamos JPG, PNG, WebP, MP4 y PDF, hasta **3 MiB por archivo (3.145.728 bytes)**. Dejamos margen para el formulario multipart dentro del límite de 4,5 MB por petición de Vercel. Usamos archivos de prueba porque el bucket permite lectura pública.
+
+## 1. Ejecutamos el proyecto en local
+
+1. Clonamos el repositorio en GitHub Desktop con **File → Clone repository**. Para evaluar el avance, seleccionamos la rama donde esté publicado: `feature/cloud-ingesta` o `main` después de integrarlo.
+2. Abrimos el repositorio en VS Code y una terminal en la carpeta que contiene `package.json`. Usamos Node.js 22 o superior.
+3. Instalamos las dependencias:
+
+   ```bat
+   npm ci
+   ```
+
+4. Creamos `.env.local` junto a `package.json` a partir de `.env.example`. Si ya lo tenemos configurado, lo conservamos. En Windows CMD podemos copiar la plantilla con:
+
+   ```bat
+   copy .env.example .env.local
+   ```
+
+5. Completamos las variables según la siguiente sección y arrancamos:
+
+   ```bat
+   npm run dev
+   ```
+
+6. Abrimos `http://localhost:3000` o la dirección que indique Next.js. En el primer avance vemos una portada temporal.
+
+## 2. Configuramos el acceso a Supabase y Neon
+
+Reutilizamos el proyecto de Supabase con el bucket `media-vault` y el proyecto de Neon con la tabla `archivos`. Si necesitamos entrar a un panel, coordinamos una invitación con el responsable de los roles 1 y 2 y usamos nuestras propias cuentas. Para evaluar el flujo en local, coordinamos con el equipo los valores de prueba por un canal privado.
+
+| Variable | De dónde la obtenemos |
+|---|---|
+| `SUPABASE_URL` | URL del proyecto de Supabase que contiene nuestro bucket |
+| `SUPABASE_SECRET_KEY` | Clave de servidor del proyecto de Supabase |
+| `SUPABASE_BUCKET` | Nombre del bucket compartido, `media-vault` |
+| `DATABASE_URL` | Cadena completa de **Connect** en Neon, para la rama y la base donde creamos `archivos` |
+| `VAULT_WRITE_TOKEN` | Clave de escritura que acordamos para la demo y enviamos en `X-Vault-Token` |
+
+Guardamos las credenciales en `.env.local`. En GitHub versionamos `.env.example` con valores de muestra. Usamos las claves de Supabase y Neon solo en el servidor. En la interfaz pedimos únicamente la clave de escritura de la demo, que conservamos en memoria. El campo `subidoPor` registra el nombre que ingresamos en el formulario.
+
+Quienes trabajamos en la persistencia necesitamos Neon y, para probar la subida y el borrado desde el servidor local, también la configuración de Supabase. Quienes trabajamos en la interfaz podemos comenzar con datos de ejemplo y probar la integración desde una instancia que el equipo tenga configurada, usando la clave de escritura para las operaciones que la requieren.
+
+## 3. Verificamos los servicios y la compilación
+
+**Neon.** Ejecutamos `npm run check:db`. Esperamos ver `OK: Neon conecta y la tabla archivos tiene las columnas esperadas.` Si la tabla ya existe, seguimos usando el mismo esquema. Si configuramos una base nueva para pruebas, ejecutamos `sql/001_archivos.sql` en su **SQL Editor**. Podemos consultar la tabla con:
+
+```sql
+SELECT * FROM archivos ORDER BY fecha_subida DESC;
+```
+
+En el primer avance podemos encontrar la tabla vacía porque el POST todavía no guarda metadatos.
+
+**Supabase.** Probamos una subida real con el siguiente comando y reemplazamos la ruta por la de un PNG válido de menos de 3 MiB:
+
+```bat
+npm run test:storage -- "C:/ruta/foto.png" image/png
+```
+
+Abrimos la URL que muestra la terminal y comprobamos que el objeto aparece en **Storage → media-vault → archivos**. Volvemos a la terminal y presionamos **Enter** para retirar ese objeto de prueba. En esta comprobación solo escribimos en Supabase.
+
+**Pruebas y compilación.** Ejecutamos `npm test` y `npm run build` con el servidor de desarrollo detenido. En la base del primer avance esperamos 18 pruebas aprobadas y una compilación exitosa. Estos dos comandos se pueden ejecutar sin credenciales.
+
+## 4. Comprobamos las respuestas HTTP en Postman
+
+1. Mantenemos `npm run dev` en ejecución y creamos una petición **POST** a `http://localhost:3000/api/archivos`. Si Next.js muestra otro puerto, lo usamos en la URL.
+2. En **Headers** de la petición agregamos y activamos `X-Vault-Token`. En **Value** pegamos solo el valor de `VAULT_WRITE_TOKEN`, sin `Bearer` ni el nombre de la variable.
+3. En **Body → form-data** agregamos los siguientes campos:
+
+   | Key | Tipo | Valor de prueba |
+   |---|---|---|
+   | `titulo` | Text | Prueba HTTP del primer avance |
+   | `subidoPor` | Text | Nuestro nombre |
+   | `archivo` | File | Un PNG válido de menos de 3 MiB |
+
+4. Dejamos que Postman genere `Content-Type` automáticamente. Pulsamos **Send** y miramos el código HTTP y el mensaje JSON en el panel de respuesta. También podemos ver el código en la terminal de Next.js.
+
+Partimos de la petición válida y cambiamos un elemento por prueba. Lo restauramos antes del siguiente caso.
+
+| Caso | Respuesta esperada |
+|---|---|
+| Clave correcta, campos completos y PNG válido | **501**. La validación pasó y queda pendiente conectar el guardado del rol 3. |
+| Desactivamos `X-Vault-Token` | **401**. Falta la clave de escritura. |
+| Desmarcamos `subidoPor` | **400**. Falta el autor. |
+| Cambiamos el PNG por un TXT pequeño | **415**. El formato no está admitido. |
+| Seleccionamos un PNG superior a 3.145.728 bytes | **413**. Superamos el límite de archivo o de petición. |
+
+Si obtenemos **401** con la petición válida, revisamos que la cabecera esté activa y coincida con `.env.local`. Si cambiamos ese archivo, reiniciamos el servidor.
+
+El **501** del primer avance no crea un objeto ni una fila. Para demostrar la subida real en esta etapa usamos `npm run test:storage`. Cuando integremos la persistencia, repetiremos el caso válido y esperaremos **201 Created**, un objeto en Supabase y una fila en Neon.
+
+## 5. Continuamos el trabajo en equipo
+
+Cuando los roles 1 y 2 estén integrados en `main`, actualizamos esa rama con **Fetch origin** y **Pull origin** si aparece. Desde ese punto creamos la rama que corresponda a nuestro aporte.
+
+**Persistencia y API (rol 3).** Completamos `lib/repositories/archivos.mjs` usando el cliente de `lib/db/client.mjs` y el esquema de `lib/db/schema.mjs`. Agregamos `GET /api/archivos` en `app/api/archivos/route.js` conservando el POST. Implementamos `DELETE /api/archivos/:id` retirando primero el objeto en Supabase mediante `lib/storage.mjs` y luego la fila en Neon. Como operamos en dos servicios, contemplamos errores parciales y reintentos.
+
+**Formulario y galería (roles 4 y 5).** Desarrollamos la interfaz en `app/page.js`, `app/globals.css` y nuestros componentes. Enviamos `archivo`, `titulo` y `subidoPor` mediante `FormData`. Usamos `GET /api/archivos` para la galería y actualizamos la vista tras una subida o eliminación exitosa. En las operaciones de escritura enviamos `X-Vault-Token`.
+
+En GitHub Desktop revisamos **Changes**, hacemos commits en nuestra rama, usamos **Publish branch** o **Push origin** y abrimos un pull request hacia `main`. En el PR registramos qué implementamos, qué comprobamos y qué queda pendiente.
+
