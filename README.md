@@ -18,7 +18,7 @@ El documento propone grupos de 4 o 5. Esta distribución adapta las responsabili
 
 El navegador envía FormData a Next.js. El Route Handler valida el cuerpo y transfiere el binario a Supabase Storage. Luego llama al módulo de persistencia del rol 3 para guardar únicamente metadatos en Neon PostgreSQL. Drizzle define el modelo y el cliente de base de datos. No hay Express, multer, XAMPP ni un segundo servidor. No se almacena el binario en la tabla ni en el disco del servidor.
 
-El borrado final, que implementará el rol 3, debe retirar primero el objeto de Supabase y luego el registro de Neon. Son dos servicios: no existe una transacción ACID conjunta entre ambos. Se necesitan compensaciones y reintentos; ver `docs/CONTRATO_EQUIPO.md`.
+El borrado final, que implementará el rol 3, debe retirar primero el objeto de Supabase y luego el registro de Neon. Son dos servicios: no existe una transacción ACID conjunta entre ambos. Se necesitan compensaciones y reintentos;
 
 ## Ejecutar
 
