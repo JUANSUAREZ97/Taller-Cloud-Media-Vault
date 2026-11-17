@@ -8,7 +8,7 @@ Reemplazar los nombres pendientes antes de la entrega.
 
 | Integrante | Responsabilidad | Rama |
 |---|---|---|
-| TU NOMBRE | Roles 1 y 2: cloud, esquema, variables, validación y subida | `feature/cloud-ingesta` |
+| Juan Suarez | Roles 1 y 2: cloud, esquema, variables, validación y subida | `feature/cloud-ingesta` |
 | NOMBRE COMPAÑERO 2 | Rol 3: persistencia, GET y DELETE sincronizado | `feature/persistencia-crud` |
 | NOMBRE COMPAÑERO 3 | Roles 4 y 5: formulario, galería, filtros y QA | `feature/frontend` |
 
