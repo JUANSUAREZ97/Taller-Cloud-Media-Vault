@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import UploadForm from '../src/components/UploadForm';
+import MediaGallery from '../src/components/MediaGallery';
 
 export default function Home() {
   const [ultimoArchivo, setUltimoArchivo] = useState(null);
@@ -18,9 +19,7 @@ export default function Home() {
         </div>
         <UploadForm onUploadSuccess={setUltimoArchivo} />
       </section>
-      {ultimoArchivo && <p className="upload-complete" role="status">
-        “{ultimoArchivo.titulo}” ya está listo para aparecer en la galería.
-      </p>}
+      <MediaGallery nuevoArchivo={ultimoArchivo} />
     </main>
   );
 }
