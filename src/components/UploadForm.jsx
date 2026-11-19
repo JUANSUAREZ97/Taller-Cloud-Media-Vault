@@ -77,7 +77,10 @@ export default function UploadForm({ onUploadSuccess }) {
         </label>
         <label>Clave de escritura
           <input name="vaultToken" type="password" autoComplete="off" value={token}
-            onChange={(event) => setToken(event.target.value)} required disabled={isUploading} />
+            onChange={(event) => {
+              setToken(event.target.value);
+              establecerTokenVault(event.target.value);
+            }} required disabled={isUploading} />
         </label>
       </div>
 

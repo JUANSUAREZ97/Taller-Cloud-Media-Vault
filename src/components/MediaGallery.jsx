@@ -59,6 +59,10 @@ export default function MediaGallery({ nuevoArchivo }) {
     setBusqueda('');
   }, [nuevoArchivo]);
 
+  const quitarArchivo = useCallback((id) => {
+    setArchivos((actuales) => actuales.filter((archivo) => archivo.id !== id));
+  }, []);
+
   const archivosVisibles = useMemo(() => {
     const texto = busqueda.trim().toLocaleLowerCase('es');
     return archivos.filter((archivo) => coincideCategoria(archivo, categoria)
@@ -111,7 +115,9 @@ export default function MediaGallery({ nuevoArchivo }) {
         </div>
       ) : (
         <div className="gallery-grid">
-          {archivosVisibles.map((archivo) => <MediaCard key={archivo.id} archivo={archivo} />)}
+          {archivosVisibles.map((archivo) => (
+            <MediaCard key={archivo.id} archivo={archivo} onDeleteSuccess={quitarArchivo} />
+          ))}
         </div>
       )}
     </section>

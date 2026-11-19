@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { eliminarArchivo } from '../services/archivosService';
 import { formatearFecha, formatearTamano } from '../utils/formatoArchivo';
 
 function tipoDeArchivo(archivo) {
@@ -14,9 +15,25 @@ function tipoDeArchivo(archivo) {
 
 const etiquetas = { imagen: 'Imagen', video: 'Video', pdf: 'PDF', archivo: 'Archivo' };
 
-export default function MediaCard({ archivo }) {
+export default function MediaCard({ archivo, onDeleteSuccess }) {
   const [imageError, setImageError] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const tipo = tipoDeArchivo(archivo);
+
+  async function handleDelete() {
+    if (!window.confirm(`¿Eliminar “${archivo.titulo}”? Esta acción no se puede deshacer.`)) return;
+    setDeleteError('');
+    setIsDeleting(true);
+    try {
+      await eliminarArchivo(archivo.id);
+      onDeleteSuccess?.(archivo.id);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'No se pudo eliminar el archivo.');
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <article className="media-card">
@@ -64,6 +81,10 @@ export default function MediaCard({ archivo }) {
           <span>Por <strong>{archivo.subidoPor}</strong></span>
           <time dateTime={archivo.fechaSubida}>{formatearFecha(archivo.fechaSubida)}</time>
         </div>
+        {deleteError && <p className="media-card__error" role="alert">{deleteError}</p>}
+        <button className="media-card__delete" type="button" onClick={handleDelete} disabled={isDeleting}>
+          {isDeleting ? <><span className="spinner spinner--dark" aria-hidden="true" /> Eliminando…</> : 'Eliminar'}
+        </button>
       </div>
     </article>
   );
