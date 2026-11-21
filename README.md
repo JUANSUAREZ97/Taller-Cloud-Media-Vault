@@ -6,9 +6,9 @@ Aplicación web para cargar, consultar y eliminar activos multimedia. La interfa
 
 | Integrante | Responsabilidad |
 |---|---|
-| Integrante 1: ____________________ | Roles 1 y 2 - Cloud, BD e Ingesta |
-| Integrante 2: ____________________ | Rol 3 - Persistencia CRUD y Sincronización |
-| Integrante 3: ____________________ | Roles 4 y 5 - Interfaz de Carga, Galería Multimedia y QA |
+| Integrante 1: Juan Esteban Suarez Ordoñez | Roles 1 y 2 - Cloud, BD e Ingesta |
+| Integrante 2: Sebastián Fernández Gómez | Rol 3 - Persistencia CRUD y Sincronización |
+| Integrante 3: Angello Cortes Palomares | Roles 4 y 5 - Interfaz de Carga, Galería Multimedia y QA |
 
 ## Arquitectura
 
