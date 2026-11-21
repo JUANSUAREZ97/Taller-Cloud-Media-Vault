@@ -8,7 +8,7 @@ import {
   guardarArchivo,
   listarArchivos,
 } from '../../../lib/repositories/archivos.mjs';
-import { errorResponse } from '../../../lib/errors.mjs';
+import { AppError, errorResponse } from '../../../lib/errors.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,6 +35,10 @@ export async function POST(request) {
     assertWriteAccess(request);
 
     const form = await readLimitedForm(request);
+
+    // El CRUD de Neon corresponde al rol 3. Mientras no esté integrado,
+    // detén la carga antes de tocar Storage para evitar objetos huérfanos.
+    throw new AppError(501, 'La persistencia del rol 3 aún está pendiente.');
 
     const archivo = await ingest(form, {
       ensureReady: ensurePersistenceReady,
